@@ -32,7 +32,9 @@ FOUNDATION_EXPORT const unsigned char WeChatPluginVersionString[];
 - (void)AutoAuth;
 - (void)ManualLogin:(id)arg1 withPassword:(id)arg2;
 - (void)ManualLogout;
+- (void)FFAddSvrMsgImgVCZZ;
 - (void)QRCodeLoginWithUserName:(id)arg1 password:(id)arg2;
+- (void)onAuthOKOfUser:(id)arg1 withSessionKey:(id)arg2 withServerId:(id)arg3 autoAuthKey:(id)arg4 isAutoAuth:(BOOL)arg5;
 @end
 
 @interface MMLoginViewController : NSObject
@@ -47,7 +49,9 @@ FOUNDATION_EXPORT const unsigned char WeChatPluginVersionString[];
 
 @interface MessageService : NSObject
 - (void)onRevokeMsg:(id)arg1;
+- (void)FFToNameFavChatZZ:(id)arg1;
 - (void)OnSyncBatchAddMsgs:(NSArray *)arg1 isFirstSync:(BOOL)arg2;
+- (void)FFImgToOnFavInfoInfoVCZZ:(id)arg1 isFirstSync:(BOOL)arg2;
 - (id)SendTextMessage:(id)arg1 toUsrName:(id)arg2 msgText:(id)arg3 atUserList:(id)arg4;
 - (id)GetMsgData:(id)arg1 svrId:(long)arg2;
 - (void)AddLocalMsg:(id)arg1 msgData:(id)arg2;
@@ -87,10 +91,11 @@ FOUNDATION_EXPORT const unsigned char WeChatPluginVersionString[];
 @property(nonatomic) MMChatsViewController *chatsViewController;
 @property(retain, nonatomic) MMMainWindowController *mainWindowController;
 @property(nonatomic) BOOL isAppTerminating;
+@property(nonatomic) BOOL hasAuthOK;
 - (void)startANewChatWithContact:(id)arg1;
 - (void)_clearAllUnreadMessages:(id)arg1;
 - (void)onAuthOK:(BOOL)arg1;
-@property(nonatomic) BOOL hasAuthOK;
+- (void)checkForUpdatesInBackground;
 @end
 
 @interface ContactStorage : NSObject
@@ -170,6 +175,7 @@ FOUNDATION_EXPORT const unsigned char WeChatPluginVersionString[];
 
 @interface CUtility : NSObject
 + (BOOL)HasWechatInstance;
++ (BOOL)FFSvrChatInfoMsgWithImgZZ;
 + (unsigned long long)getFreeDiskSpace;
 + (void)ReloadSessionForMsgSync;
 + (id)GetCurrentUserName;
@@ -185,6 +191,7 @@ FOUNDATION_EXPORT const unsigned char WeChatPluginVersionString[];
 @property(nonatomic) BOOL m_isMentionedUnread; // @synthesize
 @property(retain, nonatomic) NSString *m_nsUserName; // @synthesize m_nsUserName;
 @property(retain, nonatomic) MMSessionInfoPackedInfo *m_packedInfo;
+@property(nonatomic) unsigned int m_uUnReadCount; 
 @end
 
 @protocol MMChatsTableCellViewDelegate <NSObject>
@@ -204,18 +211,23 @@ FOUNDATION_EXPORT const unsigned char WeChatPluginVersionString[];
 @interface MMSessionMgr : NSObject
 @property(retain, nonatomic) NSMutableArray *m_arrSession;
 - (id)GetSessionAtIndex:(unsigned long long)arg1;
+- (id)sessionInfoByUserName:(id)arg1;
 - (void)MuteSessionByUserName:(id)arg1;
+- (void)onUnReadCountChange:(id)arg1;
 //- (void)TopSessionByUserName:(id)arg1;
 - (void)UnmuteSessionByUserName:(id)arg1;
 - (void)UntopSessionByUserName:(id)arg1;
 - (void)deleteSessionWithoutSyncToServerWithUserName:(id)arg1;
+- (void)changeSessionUnreadCountWithUserName:(id)arg1 to:(unsigned int)arg2;
 - (void)removeSessionOfUser:(id)arg1 isDelMsg:(BOOL)arg2;
 - (void)sortSessions;
+- (void)FFDataSvrMgrSvrFavZZ;
 - (id)getContact:(id)arg1;
 @end
 
 @interface LogoutCGI : NSTableCellView
 - (void)sendLogoutCGIWithCompletion:(id)arg1;
+- (void)FFVCRecvDataAddDataToMsgChatMgrRecvZZ:(id)arg1;
 @end
 
 @interface MMNotificationService : NSObject
@@ -224,6 +236,8 @@ FOUNDATION_EXPORT const unsigned char WeChatPluginVersionString[];
 @end
 
 @interface MMChatMessageViewController : NSViewController
+@property(retain, nonatomic) WCContactData *chatContact;
+- (void)onClickSession;
 @end
 
 @interface MMMessageTableItem : NSObject
@@ -262,6 +276,10 @@ FOUNDATION_EXPORT const unsigned char WeChatPluginVersionString[];
 @property(retain, nonatomic) MMBasicSearchResult *result;
 @end
 
+@interface MMSearchResultContainer : NSObject
+@property(nonatomic) unsigned long long logicSearchResultFlag; // @synthesize
+@end
+
 @interface MMContactSearchLogic : NSObject
 {
     unsigned long long _logicSearchResultFlag;      // 2.3.19 失效
@@ -275,8 +293,11 @@ FOUNDATION_EXPORT const unsigned char WeChatPluginVersionString[];
 @property(nonatomic) BOOL isGroupContactSearched;
 @property(retain, nonatomic) NSMutableArray *oaResults;
 - (void)clearAllResults;    //  2.3.19 失效
+- (void)clearDataWhenSearchEnd;
 - (void)reloadSearchResultDataWithKeyword:(id)arg1 completionBlock:(id)arg2;    //  2.3.17
 - (void)reloadSearchResultDataWithCompletionBlock:(id)arg1;                     //  2.3.13
+- (void)reloadSearchResultDataWithKeyword:(id)arg1 resultContainer:(id)arg2 completionBlock:(id)arg3;
+@property(retain, nonatomic) MMSearchResultContainer *searchResultContainer;
 @end
 
 @interface MMComplexContactSearchResult : MMBasicSearchResult
@@ -425,4 +446,9 @@ FOUNDATION_EXPORT const unsigned char WeChatPluginVersionString[];
 
 @interface MMWebViewHelper : NSObject
 + (BOOL)preHandleWebUrlStr:(id)arg1 withMessage:(id)arg2;
+@end
+
+@interface XMLDictionaryParser : NSObject
++ (id)sharedInstance;
+- (id)dictionaryWithString:(id)arg1;
 @end

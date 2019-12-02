@@ -80,14 +80,20 @@ static char tkAboutWindowControllerKey;             //  关于窗口的关联 ke
                                                       action:@selector(onAutoAuthControl:)
                                                       target:self
                                                keyEquivalent:@""
-                                                       state:[[TKWeChatPluginConfig sharedConfig] systemBrowerEnable]];
+                                                       state:[[TKWeChatPluginConfig sharedConfig] autoAuthEnable]];
     
     //        使用自带浏览器
-    NSMenuItem *enableSystemBrowerItem = [NSMenuItem menuItemWithTitle:TKLocalizedString(@"assistant.menu.systemBrower")
-                                                                action:@selector(onEnableSystemBrower:)
+    NSMenuItem *enableSystemBrowserItem = [NSMenuItem menuItemWithTitle:TKLocalizedString(@"assistant.menu.systemBrowser")
+                                                                action:@selector(onEnableSystemBrowser:)
                                                                 target:self
                                                          keyEquivalent:@"B"
-                                                                 state:[[TKWeChatPluginConfig sharedConfig] systemBrowerEnable]];
+                                                                 state:[[TKWeChatPluginConfig sharedConfig] systemBrowserEnable]];
+    //        是否禁止微信开启时检测新版本
+    NSMenuItem *forbidCheckUpdateItem = [NSMenuItem menuItemWithTitle:TKLocalizedString(@"assistant.menu.forbidCheck")
+                                                                 action:@selector(onForbidWeChatCheckUpdate:)
+                                                                 target:self
+                                                          keyEquivalent:@""
+                                                                  state:![[TKWeChatPluginConfig sharedConfig] checkUpdateWechatEnable]];
     
     //        开启 Alfred
     NSMenuItem *enableAlfredItem = [NSMenuItem menuItemWithTitle:TKLocalizedString(@"assistant.menu.enableAlfred")
@@ -128,9 +134,13 @@ static char tkAboutWindowControllerKey;             //  关于窗口的关联 ke
                         newWeChatItem,
                         onTopItem,
                         autoAuthItem,
-                        enableSystemBrowerItem,
+                        enableSystemBrowserItem,
                         pluginItem
                         ]];
+    WeChat *wechat = [objc_getClass("WeChat") sharedInstance];
+    if ([wechat respondsToSelector:@selector(checkForUpdatesInBackground)]) {
+        [subMenu insertItem:forbidCheckUpdateItem atIndex:6];
+    }
     [subMenu setSubmenu:subPluginMenu forItem:pluginItem];
     NSMenuItem *menuItem = [[NSMenuItem alloc] init];
     [menuItem setTitle:TKLocalizedString(@"assistant.menu.title")];
@@ -316,9 +326,14 @@ static char tkAboutWindowControllerKey;             //  关于窗口的关联 ke
     [[TKWeChatPluginConfig sharedConfig] setAlfredEnable:item.state];
 }
 
-- (void)onEnableSystemBrower:(NSMenuItem *)item {
+- (void)onEnableSystemBrowser:(NSMenuItem *)item {
     item.state = !item.state;
-    [[TKWeChatPluginConfig sharedConfig] setSystemBrowerEnable:item.state];
+    [[TKWeChatPluginConfig sharedConfig] setSystemBrowserEnable:item.state];
+}
+
+- (void)onForbidWeChatCheckUpdate:(NSMenuItem *)item {
+    item.state = !item.state;
+    [[TKWeChatPluginConfig sharedConfig] setCheckUpdateWechatEnable:!item.state];
 }
 
 - (void)onAboutPluginControl:(NSMenuItem *)item {

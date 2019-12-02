@@ -12,7 +12,6 @@
 #import <GCDWebServerDataResponse.h>
 #import <GCDWebServerURLEncodedFormRequest.h>
 #import "TKMessageManager.h"
-#import "XMLReader.h"
 #import "TKCacheManager.h"
 
 @interface TKWebServerManager ()
@@ -102,13 +101,16 @@ static int port=52700;
                 [logic reloadSearchResultDataWithKeyword:keyword completionBlock:^ {
                     hasResult = YES;
                 }];
+            } else if ([logic respondsToSelector:@selector(reloadSearchResultDataWithKeyword:resultContainer:completionBlock:)]) {
+                [logic reloadSearchResultDataWithKeyword:keyword resultContainer:nil completionBlock:^ {
+                    if (logic.searchResultContainer.logicSearchResultFlag == 7) {
+                        hasResult = YES;
+                    }
+                }];
             } else if ([logic respondsToSelector:@selector(reloadSearchResultDataWithCompletionBlock:)]) {
                 [logic reloadSearchResultDataWithCompletionBlock:^ {
                     hasResult = YES;
                 }];
-            }
-            if (![logic respondsToSelector:@selector(clearAllResults)]) {
-                hasResult = YES;
             }
         }];
         
@@ -117,7 +119,7 @@ static int port=52700;
         } else if ([logic respondsToSelector:@selector(clearAllResults)]) {
              while (!(hasResult && [[logic valueForKey:@"_logicSearchResultFlag"] longLongValue])) {};
         } else {
-            while (!(hasResult)) {};
+             while (!(hasResult)) {};
         }
         
         MMChatMangerSearchReportMgr *reportMgr = [[objc_getClass("MMServiceCenter") defaultCenter] getService:objc_getClass("MMChatMangerSearchReportMgr")];
@@ -138,6 +140,8 @@ static int port=52700;
         
         if ([logic respondsToSelector:@selector(clearAllResults)]) {
             [logic clearAllResults];
+        } else if ([logic respondsToSelector:@selector(clearDataWhenSearchEnd)]) {
+            [logic clearDataWhenSearchEnd];
         }
 
         return [GCDWebServerDataResponse responseWithJSONObject:sessionList];
@@ -435,11 +439,6 @@ static int port=52700;
             [imgMgr downloadImageWithMessage:msgData];
         }
     } else if (msgData.isCustomEmojiMsg || msgData.isEmojiAppMsg) {
-        //        以下注释取的是表情包服务器的地址，这会有一个问题，alfred 无法播放远程 gif 图片
-        //        NSDictionary *msgDict = [self dictWithMessageContent:msgData.msgContent];
-        //        if (msgDict[@"msg"] && msgDict[@"msg"][@"emoji"] && msgDict[@"msg"][@"emoji"][@"cdnurl"]) {
-        //            url = msgDict[@"msg"][@"emoji"][@"cdnurl"];
-        //        } else {
         if ([[TKCacheManager shareManager] fileExistsWithName:msgData.m_nsEmoticonMD5]) {
             url = [[TKCacheManager shareManager] filePathWithName:msgData.m_nsEmoticonMD5];
         } else {
@@ -489,18 +488,7 @@ static int port=52700;
              };
 }
 
-- (NSDictionary *)dictWithMessageContent:(NSString *)msg {
-    
-    NSError *error;
-    //      转换群聊的 msg
-    NSString *msgContent = [msg substringFromIndex:[msg rangeOfString:@"<msg"].location];
-    
-    NSDictionary *msgDict = [XMLReader dictionaryForXMLString:msgContent error:&error];
-    
-    return error? nil : msgDict;
-}
-
-- (NSString *)getDateStringWithTimeStr:(NSTimeInterval)time{
+- (NSString *)getDateStringWithTimeStr:(NSTimeInterval)time {
     NSDate *date = [NSDate dateWithTimeIntervalSince1970:time];
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
     if ([date isToday]) {
